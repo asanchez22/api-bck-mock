@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { CancellationsModule } from './cancellations/cancellations.module';
-import { SalesModule } from './sales/sales.module';
+
 import { PaymentsModule } from './payments/payments.module';
+import { SalesModule } from './sales/sales.module';
 
 @Module({
-  imports: [CancellationsModule, SalesModule, PaymentsModule],
+  imports: [SalesModule, PaymentsModule],
   controllers: [],
   providers: [],
 })

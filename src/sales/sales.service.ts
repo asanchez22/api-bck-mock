@@ -1,26 +1,51 @@
 import { Injectable } from '@nestjs/common';
-import { CreateSaleDto } from './dto/create-sale.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
+import { ApiParams, ApiResponse } from 'src/common';
+import { UtilsService } from 'src/common/utils/utils.service';
+import { SALES_DB } from './db/sales.db';
+import { ResponseData } from './interface/response-data.interface';
 
 @Injectable()
 export class SalesService {
-  create(createSaleDto: CreateSaleDto) {
-    return 'This action adds a new sale';
+  constructor(private utils: UtilsService) {}
+
+  public findSubscriptions(params: ApiParams) {
+    return this.filterByQuery(SALES_DB.REPORT, params);
   }
 
-  findAll() {
-    return `This action returns all sales`;
+  public findRejected(params: ApiParams) {
+    return this.filterByQuery(SALES_DB.REJECTED, params);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} sale`;
+  public findProcess(params: ApiParams) {
+    return this.utils.filterByPage<any>(
+      SALES_DB.PROCESS,
+      params?.page,
+      params?.take,
+    );
   }
 
-  update(id: number, updateSaleDto: UpdateSaleDto) {
-    return `This action updates a #${id} sale`;
-  }
+  private filterByQuery(
+    data: ResponseData[],
+    params: ApiParams,
+  ): ApiResponse<ResponseData> {
+    const { page, take, estado, prestador, fechaDesde, fechaHasta } = params;
+    let filterByProvider: ResponseData[] = [];
+    const filterByDate = data.filter((res: ResponseData) =>
+      this.utils.filterDate(res?.FechaVenta, fechaDesde, fechaHasta),
+    );
 
-  remove(id: number) {
-    return `This action removes a #${id} sale`;
+    filterByProvider = [...filterByDate];
+
+    if (+prestador !== 0 && !Number.isNaN(prestador)) {
+      filterByProvider = filterByDate.filter(
+        (res: ResponseData) => res?.idProveedor === +prestador,
+      );
+    }
+
+    const filterByStatus = filterByProvider.filter(
+      (res: ResponseData) => res?.idStatus === +estado || +estado === 0,
+    );
+
+    return this.utils.filterByPage<ResponseData>(filterByStatus, page, take);
   }
 }
